@@ -4,7 +4,7 @@
 #include <vector>
 #include <time.h>
 #include <stdio.h>
-#define DEBUGG
+#define DEBUGG 1
 using namespace std;
 const int INFINITY = -1; /*approximation for positive infinity*/
 
@@ -195,6 +195,10 @@ class BinaryHeap
         {
             delete[] vertexIndex;
         }
+        int distanceOfVertex(int vertexID)
+        {
+            return heap[vertexIndex[vertexID]].distance;
+        }
 };
 
 
@@ -251,10 +255,11 @@ class Graph
                 }
             }
             delete[] graph;
-            delete distance;
+            delete[] distance;
         }
         void shortestPath(int sourceID)
         {
+            /*given a vertex, finding the shortest pathes between it and all the other vertices, infinity if not connected*/
             /*path is not reserved, however, adding an array storing the previous node in the path would do*/
             int* visited = new int[size]();
             BinaryHeap priorityQ(size);
@@ -294,6 +299,54 @@ class Graph
             }/*end of looping for the priorityQ*/
             priorityQ.deleteVertexIndex(); /*if time is intense, remove this delete statement*/
         }/*end of the dijkstra algorithm*/
+    
+    
+        int shortestPathBetween2points(int sourceID, int destinationID)
+        {
+            int* visited = new int[size]();
+            BinaryHeap priorityQ(size);
+            Vertex source(sourceID, 0);
+            priorityQ.insert(source);
+            while(priorityQ.empty()==false)
+            {
+                source=priorityQ.extractMin();
+                sourceID=source.vertex;
+                if(sourceID==destinationID)
+                {
+                    delete[] visited;/*if time is limited, remove this*/
+                    return source.distance;
+                }
+                visited[sourceID]=1;
+                GraphVertex* neighbor=graph[sourceID];
+                while(neighbor!=NULL)
+                {
+                    int vertexID=neighbor->vertex;
+                    if(visited[vertexID]==0)
+                    {
+                        /*for all vertices that is unvisited, if it is not in the priorityQ, its distance must be INFINITY, else it must not be INFINITY*/
+                        /*the new distance can be calculated from the weight between it and the source vertex plus the source distance*/
+                        int nDistance=source.distance+neighbor->weight;
+                        Vertex nVertex(vertexID, nDistance);
+                        if(priorityQ.contains(vertexID)==false)
+                        {
+                            priorityQ.insert(nVertex);
+                        }
+                        else
+                        {
+                            if(priorityQ.distanceOfVertex(vertexID)>nDistance)
+                            {
+                                priorityQ.decreaseWithVertex(nVertex);
+                            }
+                        }
+                    }
+                    neighbor=neighbor->next;
+                }/*end of inserting/decreasing keys for the neighbor of source*/
+            }/*end of looping for the priorityQ*/
+            priorityQ.deleteVertexIndex();/*if time is limited, remove this*/
+            delete[] visited;/*if time is limited, remove this*/
+            return INFINITY;
+        }/*this is a littel amendment of dijkstra algorithm*/
+    
         int distanceOfVertex(int u)
         {
             return distance[u];
@@ -367,6 +420,35 @@ void NearestDriver(){
 
 void QueryPrice(){
     //your code starts here
+    int n, m;
+    cin >> n >> m;
+    
+    Graph g(n); // implement Graph class by yourself
+    
+    for(int i = 0; i < m; i++){
+        int a, b, w;
+        cin >> a >> b >> w;
+        
+        g.addEdge(a, b, w);
+    }
+    int k;
+    cin>>k;
+    for(int i=0; i<k; ++i)
+    {
+        int s, t;
+        cin>>s>>t;
+        int distance=g.shortestPathBetween2points(s, t);
+        if(distance!=INFINITY)
+        {
+            cout<<distance<<endl;
+        }
+        else
+        {
+            cout<<"NO"<<endl;
+        }
+    }
+    g.deleteGraph();/*if time is limited, remove this delete statement*/
+    return;
 }
 
 void Diameter(){
@@ -378,7 +460,7 @@ void DiameterApproximation(){
 }
 
 int main(){
-    #ifdef DEBUGG
+    #if DEBUGG
         clock_t tStart = clock();
     #endif
     string section;
@@ -396,7 +478,7 @@ int main(){
         cout << "wrong input file!" << endl;
         assert(0);
     }
-    #ifdef DEBUGG
+    #if DEBUGG
     printf("Time taken: %.2fs\n", (double)(clock() - tStart)/CLOCKS_PER_SEC);
     #endif
     return 0;
