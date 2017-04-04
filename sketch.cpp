@@ -222,9 +222,12 @@ class Graph
         GraphVertex** graph;
         int size;
         int* distance;
+        bool matrix; 
+        int** graphD; /*initially, the weight of all edges, if does not exits, assign infinity*/
     public:
         Graph(int n)
         {
+            matrix=false;
             size=n;
             graph=new GraphVertex*[size](); /*to initialize all the elements in the array as 0/NULL*/
             distance =new int[size];
@@ -233,29 +236,69 @@ class Graph
                 distance[i]=INFINITY;
             }
         }
+        Graph(int n, int m)
+        {
+            matrix=true;
+            size=n;
+            graphD =new int*[size];
+            for(int i=0; i<size; ++i)
+            {
+                *(graphD+i)=new int[size];
+                for(int j=0; j<size; ++j)
+                {
+                    if(i==j)
+                    {
+                        graphD[i][j]=0;
+                    }
+                    else
+                    {
+                        graphD[i][j]=INFINITY;
+                    }
+                }
+            }
+        }
         void addEdge(int v1, int v2, int w)
         {
-            GraphVertex* temp1=new GraphVertex(v2, w);
-            temp1->next=graph[v1];
-            graph[v1]=temp1;
-            GraphVertex* temp2=new GraphVertex(v1,w);
-            temp2->next=graph[v2];
-            graph[v2]=temp2;
+            if(matrix==false)
+            {
+                GraphVertex* temp1=new GraphVertex(v2, w);
+                temp1->next=graph[v1];
+                graph[v1]=temp1;
+                GraphVertex* temp2=new GraphVertex(v1,w);
+                temp2->next=graph[v2];
+                graph[v2]=temp2;
+            }
+            else
+            {
+                graphD[v1][v2]=w;
+                graphD[v2][v1]=w;
+            }
         }
         void deleteGraph()
         {
-            for(int i=0; i<size; ++i)
+            if(matrix==false)
             {
-                GraphVertex* current=graph[i];
-                while(current!=NULL)
+                for(int i=0; i<size; ++i)
                 {
-                    GraphVertex* temp=current->next;
-                    delete current;
-                    current=temp;
+                    GraphVertex* current=graph[i];
+                    while(current!=NULL)
+                    {
+                        GraphVertex* temp=current->next;
+                        delete current;
+                        current=temp;
+                    }
                 }
+                delete[] graph;
+                delete[] distance;
             }
-            delete[] graph;
-            delete[] distance;
+            else
+            {
+                for(int i=0; i<size; ++i)
+                {
+                    delete[] *(graphD+i);
+                }
+                delete[] graphD;
+            }
         }
         void shortestPath(int sourceID)
         {
@@ -301,7 +344,7 @@ class Graph
         }/*end of the dijkstra algorithm*/
     
     
-        int shortestPathBetween2points(int sourceID, int destinationID)
+        int shortestPath2Dij(int sourceID, int destinationID)
         {
             int* visited = new int[size]();
             BinaryHeap priorityQ(size);
@@ -345,8 +388,36 @@ class Graph
             priorityQ.deleteVertexIndex();/*if time is limited, remove this*/
             delete[] visited;/*if time is limited, remove this*/
             return INFINITY;
-        }/*this is a littel amendment of dijkstra algorithm*/
-    
+        }/*this is a littel variant of dijkstra algorithm*/
+
+        void Floyd_Warshall()
+        /*this algorithm follows the fact that the shortest path from i to j can be found in the following way:
+        all imtemediate vertice in {1, ..., k-1} or must be a path from i to k plus k to j, vertices definitely from {1, ..., k-1}*/
+        {
+            for(int k=0; k<size; ++k)
+            {
+                for(int i=0; i<size; ++i)
+                {
+                    for(int j=0; j<size; ++j)
+                    {
+                        int compositePath;
+                        if(graphD[i][k]!=INFINITY && graphD[k][j]!=INFINITY)
+                        {
+                            compositePath=graphD[i][k]+graphD[k][j];
+                            if(graphD[i][j]==INFINITY || graphD[i][j]>compositePath)
+                            {
+                                graphD[i][j]=compositePath;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        
+        int shortestPathFW(int v1, int v2)
+        {
+            return graphD[v1][v2];
+        }
         int distanceOfVertex(int u)
         {
             return distance[u];
@@ -423,7 +494,8 @@ void QueryPrice(){
     int n, m;
     cin >> n >> m;
     
-    Graph g(n); // implement Graph class by yourself
+    /*
+    Graph g(n); 
     
     for(int i = 0; i < m; i++){
         int a, b, w;
@@ -437,7 +509,31 @@ void QueryPrice(){
     {
         int s, t;
         cin>>s>>t;
-        int distance=g.shortestPathBetween2points(s, t);
+        int distance=g.shortestPath2Dij(s, t);
+        if(distance!=INFINITY)
+        {
+            cout<<distance<<endl;
+        }
+        else
+        {
+            cout<<"NO"<<endl;
+        }
+    }*/
+    Graph g(n, m);
+    for(int i = 0; i < m; i++){
+        int a, b, w;
+        cin >> a >> b >> w;
+        
+        g.addEdge(a, b, w);
+    }
+    int k;
+    cin>>k;
+    g.Floyd_Warshall();
+    for(int i=0; i<k; ++i)
+    {
+        int s, t;
+        cin>>s>>t;
+        int distance=g.shortestPathFW(s, t);
         if(distance!=INFINITY)
         {
             cout<<distance<<endl;
