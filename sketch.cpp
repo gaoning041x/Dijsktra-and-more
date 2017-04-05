@@ -223,20 +223,20 @@ class Graph
         int size;
         int* distance;
         bool matrix; 
-        int** graphD; /*initially, the weight of all edges, if does not exits, assign infinity*/
+        int** graphD; //initially, the weight of all edges, if does not exits, assign infinity
     public:
         Graph(int n)
         {
             matrix=false;
             size=n;
-            graph=new GraphVertex*[size](); /*to initialize all the elements in the array as 0/NULL*/
+            graph=new GraphVertex*[size](); //to initialize all the elements in the array as 0/NULL
             distance =new int[size];
             for(int i=0; i<size; ++i)
             {
                 distance[i]=INFINITY;
             }
         }
-        Graph(int n, int m)
+        Graph(int n, int m)//m is a dummy variable
         {
             matrix=true;
             size=n;
@@ -423,6 +423,29 @@ class Graph
             return distance[u];
         }
 
+        int diameterFW ()
+        {
+            Floyd_Warshall();
+            int longest=0;
+            for(int i=0; i<size; ++i)
+            {
+                for(int j=0; j<size; ++j)
+                {
+                    if(graphD[i][j]==INFINITY)
+                    {
+                        //cout<<"i: "<<i<<" j: "<<j<<" graphD[i][j]: "<<graphD[i][j]<<endl;
+                        return INFINITY;
+                    }
+                    if(graphD[i][j]>longest)
+                    {
+                        //cout<<"i: "<<i<<" j: "<<j<<" graphD[i][j]: "<<graphD[i][j]<<endl;
+                        longest=graphD[i][j];
+                    }
+                }
+            }
+            return longest;
+        }
+
 };
 
 void NearestDriver(){
@@ -549,6 +572,25 @@ void QueryPrice(){
 
 void Diameter(){
     //your code starts here
+    int n, m;
+    cin >> n >> m;
+    Graph g(n, m);
+    for(int i = 0; i < m; i++){
+        int a, b, w;
+        cin >> a >> b >> w;
+        
+        g.addEdge(a, b, w);
+    }
+    int dia=g.diameterFW();
+    if(dia==INFINITY)
+    {
+        cout<<"INF"<<endl;
+    }
+    else
+    {
+        cout<<dia<<endl;
+    }
+    g.deleteGraph();
 }
 
 void DiameterApproximation(){
