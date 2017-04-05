@@ -4,7 +4,7 @@
 #include <vector>
 #include <time.h>
 #include <stdio.h>
-#define DEBUGG 1
+#define DEBUGG 0
 using namespace std;
 const int INFINITY = -1; /*approximation for positive infinity*/
 
@@ -446,6 +446,32 @@ class Graph
             return longest;
         }
 
+        void renewDistance()
+        {//only for adjacency list representation
+            for(int i=0; i<size; ++i)
+            {
+                distance[i]=INFINITY;
+            }
+        }
+
+        Vertex largestDistance()
+        {
+            //for adjacency list rep only, after dijkstra
+            Vertex lv(0, distance[0]);
+            for(int i=0; i<size; ++i)
+            {
+                Vertex vi(i, distance[i]);
+                if(distance[i]==INFINITY)
+                {
+                    return vi;
+                }
+                else if(vi>lv)
+                {
+                    lv=vi;
+                }
+            }
+            return lv;
+        }
 };
 
 void NearestDriver(){
@@ -595,6 +621,45 @@ void Diameter(){
 
 void DiameterApproximation(){
     //your code starts here
+    int n, m;
+    cin>>n>>m;
+    Graph g(n);
+    for(int i=0; i<m; ++i)
+    {
+        int a, b, w;
+        cin>>a>>b>>w;
+        g.addEdge(a, b, w);
+    }
+    int s=n/2;//pick an s
+    g.shortestPath(s);
+    Vertex d1=g.largestDistance();
+    g.renewDistance();
+    int u=d1.vertex;
+    g.shortestPath(u);
+    Vertex d2=g.largestDistance();
+    if(d1>d2)
+    {
+        if(d1.distance==INFINITY)
+        {
+            cout<<"INF"<<endl;
+        }
+        else
+        {
+            cout<<d1.distance<<endl;
+        }
+    }
+    else
+    {
+        if(d2.distance==INFINITY)
+        {
+            cout<<"INF"<<endl;
+        }
+        else
+        {
+            cout<<d2.distance<<endl;
+        }
+    }
+    g.deleteGraph();
 }
 
 int main(){
